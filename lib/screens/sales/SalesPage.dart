@@ -43,6 +43,19 @@ class _SalesPageState extends State<SalesPage> {
     });
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _calculateTotal() {
+    totalAmount = 0.0;
+    cart.forEach((key, product) {
+      totalAmount += product['subtotal'];
+    });
+  }
+
   Future<void> _addProductToCart(String barcode) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -59,6 +72,17 @@ class _SalesPageState extends State<SalesPage> {
     }
 
     final product = Map<String, dynamic>.from(productSnap.value as Map);
+    // Check for expiry
+    if (product['expiry_date'] != null && product['expiry_date'].toString().isNotEmpty) {
+      try {
+        final expiry = DateTime.parse(product['expiry_date'].toString());
+        if (expiry.isBefore(DateTime.now())) {
+          _showMessage('Product is expired and cannot be sold!');
+          return;
+        }
+      } catch (e) {}
+    }
+
     final availableQuantity = int.tryParse(product['quantity'].toString()) ?? 0;
     final price = double.tryParse(product['price'].toString()) ?? 0.0;
 
@@ -86,13 +110,6 @@ class _SalesPageState extends State<SalesPage> {
 
     _calculateTotal();
     setState(() {});
-  }
-
-  void _calculateTotal() {
-    totalAmount = 0.0;
-    cart.forEach((key, product) {
-      totalAmount += product['subtotal'];
-    });
   }
 
   void _removeFromCart(String barcode) {
@@ -131,12 +148,6 @@ class _SalesPageState extends State<SalesPage> {
       _calculateTotal();
       setState(() {});
     });
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   void _cancelSale() {

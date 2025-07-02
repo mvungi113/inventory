@@ -25,6 +25,7 @@ class _ProductRegistrationScreenState extends State<ProductRegistrationScreen> {
   final TextEditingController quantityController = TextEditingController();
   String? selectedUnit;
   String? selectedCategory;
+  String? expiryDate; // New field for expiry date
 
   List<String> units = [];
   List<String> categories = [];
@@ -112,6 +113,20 @@ class _ProductRegistrationScreenState extends State<ProductRegistrationScreen> {
     }
   }
 
+  void _pickExpiryDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        expiryDate = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
   void _submitProduct() async {
     if (_formKey.currentState!.validate() && barcode != null) {
       final snapshot = await _productRef.child(barcode!).get();
@@ -135,6 +150,7 @@ class _ProductRegistrationScreenState extends State<ProductRegistrationScreen> {
           'quantity': quantityController.text,
           'category': selectedCategory,
           'date_added': now,
+          'expiry_date': expiryDate, // Save expiry date
         });
       }
 
@@ -149,6 +165,7 @@ class _ProductRegistrationScreenState extends State<ProductRegistrationScreen> {
         barcode = null;
         selectedUnit = null;
         selectedCategory = null;
+        expiryDate = null; // Reset expiry date
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -338,6 +355,32 @@ class _ProductRegistrationScreenState extends State<ProductRegistrationScreen> {
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Expiry Date',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickExpiryDate,
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      hintText: 'Select expiry date',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    controller: TextEditingController(text: expiryDate ?? ''),
+                    validator: (value) => (expiryDate == null || expiryDate!.isEmpty)
+                        ? 'Select expiry date'
+                        : null,
+                  ),
+                ),
               ),
 
               const SizedBox(height: 20),

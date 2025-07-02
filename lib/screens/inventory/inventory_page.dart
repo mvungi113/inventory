@@ -309,9 +309,23 @@ class _InventoryPageState extends State<InventoryPage> {
                       final p = filteredProducts[index];
                       final int quantity = int.tryParse(p['quantity'].toString()) ?? 0;
 
+                      // Check for expiry
+                      bool isExpired = false;
+                      if (p['expiry_date'] != null && p['expiry_date'].toString().isNotEmpty) {
+                        try {
+                          final expiry = DateTime.parse(p['expiry_date'].toString());
+                          if (expiry.isBefore(DateTime.now())) {
+                            isExpired = true;
+                          }
+                        } catch (e) {}
+                      }
+
                       String status = 'Out of Stock';
                       Color statusColor = Colors.red;
-                      if (quantity > 10) {
+                      if (isExpired) {
+                        status = 'Expired';
+                        statusColor = Colors.purple;
+                      } else if (quantity > 10) {
                         status = 'In Stock';
                         statusColor = Colors.green;
                       } else if (quantity > 0) {
